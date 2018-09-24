@@ -35,13 +35,13 @@ public class MainTransformer {
     }
 
     public void transform(final TransformerConfiguration transformerConfiguration) throws TransformerException {
-        SaxonTransformerFactory factory = new TransformerFactoryImpl();
-        Configuration saxonConfig = factory.getConfiguration();
+        final SaxonTransformerFactory factory = new TransformerFactoryImpl();
+        final Configuration saxonConfig = factory.getConfiguration();
 
-        Processor processor = (Processor) saxonConfig.getProcessor();
+        final Processor processor = (Processor) saxonConfig.getProcessor();
         processor.registerExtensionFunction(new UUIDExtension());
 
-        Transformer transformer = factory.newTransformer(transformerConfiguration.getXsltTemplate());
+        final Transformer transformer = factory.newTransformer(transformerConfiguration.getXsltTemplate());
         transformer.transform(transformerConfiguration.getSourceFile(), transformerConfiguration.getResult());
     }
 

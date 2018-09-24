@@ -27,7 +27,10 @@
                 </xsl:element>
                 <xsl:for-each select="createTable/column[@remarks]">
                     <xsl:element name="setColumnRemarks">
-                        <xsl:copy-of select="../@tableName,(@name,@remarks)" />
+                        <xsl:copy-of select="../@tableName" />
+                        <xsl:attribute name="columnName" select="@name"/>
+                        <xsl:copy-of select="@remarks"/>
+
                     </xsl:element>
                 </xsl:for-each>
             </xsl:element>

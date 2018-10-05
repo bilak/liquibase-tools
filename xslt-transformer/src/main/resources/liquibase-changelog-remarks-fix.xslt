@@ -23,11 +23,11 @@
                 <xsl:attribute name="id" select="uuid:new-uuid()"/>
                 <xsl:attribute name="author">system</xsl:attribute>
                 <xsl:element name="setTableRemarks">
-                    <xsl:copy-of select="createTable//(@tableName,@remarks)" />
+                    <xsl:copy-of select="createTable/(@tableName, @remarks)"/>
                 </xsl:element>
                 <xsl:for-each select="createTable/column[@remarks]">
                     <xsl:element name="setColumnRemarks">
-                        <xsl:copy-of select="../@tableName" />
+                        <xsl:copy-of select="../@tableName"/>
                         <xsl:attribute name="columnName" select="@name"/>
                         <xsl:copy-of select="@remarks"/>
 

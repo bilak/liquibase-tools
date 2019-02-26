@@ -1,0 +1,18 @@
+spring:
+  datasource:
+    url: jdbc:oracle:thin:@//localhost:1521/ORCLPDB1
+    username:
+    password:
+  jmx:
+    enabled: false
+  liquibase:
+    enabled: false
+
+
+ddl-exporter:
+  oracle:
+    owner: ${spring.datasource.username}
+    dbmsList: oracle
+
+logging:
+  level.com.github.bilak: DEBUG

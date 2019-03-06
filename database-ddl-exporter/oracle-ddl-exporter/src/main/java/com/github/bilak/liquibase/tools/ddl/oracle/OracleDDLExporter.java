@@ -53,10 +53,6 @@ public class OracleDDLExporter implements InitializingBean {
 
     private static final String END_DELIMITER = "\\n/";
 
-    private static final String TEMP_DIR = System.getProperty("java.io.tmpdir");
-
-    private static final Path TEMP_PATH = Paths.get(TEMP_DIR, "liquibase-changelogs");
-
     private final NamedParameterJdbcTemplate jdbcTemplate;
 
     private final DDLExporterConfigurationProperties configurationProperties;
@@ -73,7 +69,7 @@ public class OracleDDLExporter implements InitializingBean {
             if (getObjectTypeCount(objectType, configurationProperties.getOwner()) <= 0) {
                 logger.debug("No object found for type {}", objectType.getName());
             } else {
-                final Path changeFolderPath = Paths.get(TEMP_PATH.toString(), objectType.getName().toLowerCase());
+                final Path changeFolderPath = Paths.get(configurationProperties.getChangeLogRootDir(), objectType.getName().toLowerCase());
                 logger.debug("Object type changeLog folder {}", changeFolderPath);
                 createDirectory(changeFolderPath);
                 final DatabaseChangeLog changeLog = createChangeLogForType(changeFolderPath, objectType, configurationProperties);
@@ -86,7 +82,7 @@ public class OracleDDLExporter implements InitializingBean {
         }
     }
 
-    private int getObjectTypeCount(final ObjectType objectType, final String owner) {
+    private Integer getObjectTypeCount(final ObjectType objectType, final String owner) {
         return jdbcTemplate.queryForObject(QUERY_COUNT_OBJECTS_FOR_OBJECT_TYPE,
                 new MapSqlParameterSource(OWNER_QUERY_PARAM, owner)
                         .addValue(OBJECT_TYPE_QUERY_PARAM, objectType.getName()),
@@ -104,25 +100,31 @@ public class OracleDDLExporter implements InitializingBean {
     private DatabaseChangeLog createChangeLogForType(final Path parentDir, final ObjectType objectType,
             final DDLExporterConfigurationProperties config) {
         final DatabaseChangeLog changeLog = new DatabaseChangeLog(Paths.get(parentDir.toString(), "changelog.xml").toString());
-        final String idPrefix = "create " + objectType.getName().toLowerCase();
+        final String idPrefix = "create_" + objectType.getName().toLowerCase();
 
         getObjectTypeNames(objectType, config.getOwner())
                 .forEach(name -> {
                     logger.info("Exporting [{}] [{}]", objectType.getName(), name);
                     try {
-                        final String fileName = name.toLowerCase().concat(".sql");
-                        final String id = idPrefix + " " + name.toLowerCase();
+                        final String id = idPrefix + "-" + name.toLowerCase();
 
                         final String objectBody = jdbcTemplate.queryForObject(QUERY_GET_DDL,
                                 new MapSqlParameterSource(OBJECT_TYPE_QUERY_PARAM, objectType.getGetDdlParamValue())
                                         .addValue(OBJECT_NAME_QUERY_PARAM, name),
                                 String.class);
 
-                        final File targetFile = Paths.get(parentDir.toString(), fileName).toFile();
+                        final String fileName = name.toLowerCase().concat(".sql");
+                        final Path objectTypeOracleDirectory = Paths.get(parentDir.toString(), "oracle");
+                        if (!objectTypeOracleDirectory.toFile().exists()){
+                            final boolean created = objectTypeOracleDirectory.toFile().mkdirs();
+                            logger.debug("Directory {} was created {}", objectTypeOracleDirectory, created);
+                        }
+                        final Path targetFile = Paths.get(objectTypeOracleDirectory.toString(), fileName);
                         writeObjectBody(objectBody, targetFile);
 
                         final ChangeSet changeSet = createEmptyChangeSet(changeLog, id, config);
-                        changeSet.addChange(createSqlFileChange(fileName));
+                        changeSet.addChange(createSqlFileChange(getRelativeOrFullPath(targetFile, configurationProperties),
+                                config.isChangePathRelativeToChangeLogPath()));
                         changeSet.addRollbackChange(createRollback(objectType, name));
                         changeLog.addChangeSet(changeSet);
                     } catch (RuntimeException e) {
@@ -133,8 +135,17 @@ public class OracleDDLExporter implements InitializingBean {
         return changeLog;
     }
 
-    private static void writeObjectBody(final String objectBody, final File targetFile) {
-        try (Writer writer = new OutputStreamWriter(new FileOutputStream(targetFile), StandardCharsets.UTF_8)) {
+    private static String getRelativeOrFullPath(final Path parentDir, final DDLExporterConfigurationProperties configurationProperties){
+        if (configurationProperties.isChangePathRelativeToChangeLogPath()){
+            return Paths.get("oracle", parentDir.getFileName().toString()).toString();
+        }
+
+        // we want to get filename, oracle dir and type dir so index is -3.
+        return parentDir.subpath(parentDir.getNameCount() -3, parentDir.getNameCount()).toString();
+    }
+
+    private static void writeObjectBody(final String objectBody, final Path targetFile) {
+        try (Writer writer = new OutputStreamWriter(new FileOutputStream(targetFile.toFile()), StandardCharsets.UTF_8)) {
             FileCopyUtils.copy(objectBody, writer);
         } catch (IOException e) {
             throw new OracleDDLExporterException("Unable to write file", e);
@@ -160,11 +171,11 @@ public class OracleDDLExporter implements InitializingBean {
     }
 
 
-    private SQLFileChange createSqlFileChange(final String path) {
+    private SQLFileChange createSqlFileChange(final String path, final Boolean relativeToChangeLogFile) {
         final SQLFileChange change = new SQLFileChange();
         change.setEndDelimiter(END_DELIMITER);
         change.setPath(path);
-        change.setRelativeToChangelogFile(Boolean.TRUE);
+        change.setRelativeToChangelogFile(relativeToChangeLogFile);
         change.setSplitStatements(Boolean.TRUE);
 
         return change;
@@ -266,5 +277,4 @@ public class OracleDDLExporter implements InitializingBean {
             return name();
         }
     }
-
 }

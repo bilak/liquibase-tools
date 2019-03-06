@@ -13,6 +13,7 @@ ddl-exporter:
   oracle:
     owner: ${spring.datasource.username}
     dbmsList: oracle
+    changePathRelativeToChangeLogPath: true
 
 logging:
   level.com.github.bilak: DEBUG

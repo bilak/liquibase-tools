@@ -85,7 +85,7 @@ public class OracleDDLExporter implements InitializingBean {
     private Integer getObjectTypeCount(final ObjectType objectType, final String owner) {
         return jdbcTemplate.queryForObject(QUERY_COUNT_OBJECTS_FOR_OBJECT_TYPE,
                 new MapSqlParameterSource(OWNER_QUERY_PARAM, owner)
-                        .addValue(OBJECT_TYPE_QUERY_PARAM, objectType.getName()),
+                        .addValue(OBJECT_TYPE_QUERY_PARAM, objectType.getDatabaseRepresentation()),
                 Integer.class);
     }
 

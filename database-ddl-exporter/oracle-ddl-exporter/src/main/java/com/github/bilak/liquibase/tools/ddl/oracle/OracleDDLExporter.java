@@ -243,7 +243,8 @@ public class OracleDDLExporter implements InitializingBean {
                 return "PROCOBJ";
             }
         },
-        TRIGGER("TRIGGER");
+        TRIGGER("TRIGGER"),
+        TYPE("TYPE");
 
         private final String databaseRepresentation;
 

@@ -33,6 +33,7 @@
 
                     </xsl:element>
                 </xsl:for-each>
+                <xsl:element name="rollback"/>
             </xsl:element>
         </xsl:if>
     </xsl:template>

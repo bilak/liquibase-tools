@@ -269,7 +269,6 @@ public class OracleDDLExporter implements InitializingBean {
                     .append(getDatabaseRepresentation())
                     .append(' ')
                     .append(objectName)
-                    .append(';')
                     .toString();
         }
 

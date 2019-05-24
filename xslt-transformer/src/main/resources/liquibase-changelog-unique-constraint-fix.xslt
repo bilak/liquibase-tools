@@ -22,16 +22,32 @@
                 <xsl:attribute name="author">system</xsl:attribute>
                 <xsl:attribute name="id" select="uuid:new-uuid()"/>
                 <xsl:element name="addUniqueConstraint">
-                    <xsl:copy-of select="addUniqueConstraint/[@*[not(name()='forIndexName')]]"/>
+                    <xsl:copy-of select="addUniqueConstraint/@*[not(name()='forIndexName')]"/>
                 </xsl:element>
                 <xsl:element name="modifySql">
                     <xsl:attribute name="dbms">oracle</xsl:attribute>
                     <xsl:element name="append">
-                        <xsl:attribute name="value"> USING INDEX <xsl:value-of select="addUniqueConstraint/@forIndexName"/></xsl:attribute>
+                        <xsl:attribute name="value">
+                            <xsl:value-of select="' USING INDEX '"/>
+                        </xsl:attribute>
+                    </xsl:element>
+                </xsl:element>
+                <xsl:element name="modifySql">
+                    <xsl:attribute name="dbms">postgresql</xsl:attribute>
+                    <xsl:element name="regExpReplace">
+                        <xsl:attribute name="replace">
+                            <xsl:value-of select="'(\(.*\))'"/>
+                        </xsl:attribute>
+                        <xsl:attribute name="with"/>
+                    </xsl:element>
+                    <xsl:element name="append">
+                        <xsl:attribute name="value">
+                            <xsl:value-of select="' USING INDEX '"/>
+                            <xsl:value-of select="addUniqueConstraint/@forIndexName"/>
+                        </xsl:attribute>
                     </xsl:element>
                 </xsl:element>
             </xsl:element>
         </xsl:if>
     </xsl:template>
-
 </xsl:transform>

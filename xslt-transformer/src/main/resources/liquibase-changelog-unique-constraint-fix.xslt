@@ -16,6 +16,7 @@
         <xsl:copy>
             <xsl:copy-of select="@*"/>
             <xsl:copy-of select="*[not(self::addUniqueConstraint)]"/>
+            <xsl:element name="rollback"/>
         </xsl:copy>
         <xsl:if test="addUniqueConstraint">
             <xsl:element name="changeSet">

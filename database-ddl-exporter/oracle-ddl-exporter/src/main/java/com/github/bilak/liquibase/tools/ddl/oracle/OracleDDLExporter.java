@@ -244,7 +244,18 @@ public class OracleDDLExporter implements InitializingBean {
             }
         },
         TRIGGER("TRIGGER"),
-        TYPE("TYPE");
+        TYPE("TYPE") {
+            @Override
+            public String getGetDdlParamValue() {
+                return "TYPE_SPEC";
+            }
+        },
+        TYPE_BODY("TYPE BODY") {
+            @Override
+            public String getGetDdlParamValue() {
+                return "TYPE_BODY";
+            }
+        };
 
         private final String databaseRepresentation;
 

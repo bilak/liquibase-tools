@@ -19,6 +19,13 @@
                 <xsl:copy-of select="createSequence/[@*[not(name()='ordered')]]"/>
             </xsl:element>
             <xsl:if test="createSequence/@ordered = true()">
+                <xsl:element name="rollback">
+                    <xsl:element name="dropSequence">
+                        <xsl:attribute name="sequenceName">
+                            <xsl:value-of select="createSequence/@sequenceName"/>
+                        </xsl:attribute>
+                    </xsl:element>
+                </xsl:element>
                 <xsl:element name="modifySql">
                     <xsl:attribute name="dbms">oracle</xsl:attribute>
                     <xsl:element name="append">
@@ -28,9 +35,6 @@
             </xsl:if>
             <xsl:copy-of select="*[not(self::createSequence)]"/>
         </xsl:copy>
-
-
-
     </xsl:template>
 
 </xsl:transform>

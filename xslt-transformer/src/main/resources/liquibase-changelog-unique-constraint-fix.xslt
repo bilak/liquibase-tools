@@ -12,10 +12,10 @@
         </xsl:copy>
     </xsl:template>
 
-    <xsl:template match="changeSet[createIndex and addUniqueConstraint]">
+    <xsl:template match="changeSet[createIndex and (addUniqueConstraint or addPrimaryKey)]">
         <xsl:copy>
             <xsl:copy-of select="@*"/>
-            <xsl:copy-of select="*[not(self::addUniqueConstraint)]"/>
+            <xsl:copy-of select="*[not(self::addUniqueConstraint) and not(self::addPrimaryKey)]"/>
             <xsl:element name="rollback"/>
         </xsl:copy>
         <xsl:if test="addUniqueConstraint">
@@ -26,25 +26,59 @@
                     <xsl:copy-of select="addUniqueConstraint/@*[not(name()='forIndexName')]"/>
                 </xsl:element>
                 <xsl:element name="modifySql">
-                    <xsl:attribute name="dbms">oracle</xsl:attribute>
+                    <xsl:attribute name="dbms" select="'oracle'"/>
                     <xsl:element name="append">
-                        <xsl:attribute name="value">
-                            <xsl:value-of select="' USING INDEX '"/>
-                        </xsl:attribute>
+                        <xsl:attribute name="value" select="' USING INDEX '"/>
                     </xsl:element>
                 </xsl:element>
                 <xsl:element name="modifySql">
                     <xsl:attribute name="dbms">postgresql</xsl:attribute>
                     <xsl:element name="regExpReplace">
-                        <xsl:attribute name="replace">
-                            <xsl:value-of select="'(\(.*\))'"/>
-                        </xsl:attribute>
+                        <xsl:attribute name="replace" select="'(\(.*\))'"/>
                         <xsl:attribute name="with"/>
                     </xsl:element>
                     <xsl:element name="append">
                         <xsl:attribute name="value">
                             <xsl:value-of select="' USING INDEX '"/>
                             <xsl:value-of select="addUniqueConstraint/@forIndexName"/>
+                        </xsl:attribute>
+                    </xsl:element>
+                </xsl:element>
+            </xsl:element>
+        </xsl:if>
+        <xsl:if test="addPrimaryKey">
+            <xsl:element name="changeSet">
+                <xsl:attribute name="author" select="'system'"/>
+                <xsl:attribute name="id" select="uuid:new-uuid()"/>
+                <xsl:element name="addPrimaryKey">
+                    <xsl:copy-of select="addPrimaryKey/@*[not(name()='forIndexName')]"/>
+                </xsl:element>
+                <xsl:element name="modifySql">
+                    <xsl:attribute name="dbms" select="'oracle'"/>
+                    <xsl:element name="append">
+                        <xsl:attribute name="value" select="' USING INDEX '"/>
+                    </xsl:element>
+                </xsl:element>
+                <xsl:element name="rollback">
+                    <xsl:element name="dropPrimaryKey">
+                        <xsl:attribute name="tableName">
+                            <xsl:value-of select="addPrimaryKey/@tableName"/>
+                        </xsl:attribute>
+                        <xsl:attribute name="constraintName">
+                            <xsl:value-of select="addPrimaryKey/@constraintName"/>
+                        </xsl:attribute>
+                    </xsl:element>
+                </xsl:element>
+                <xsl:element name="modifySql">
+                    <xsl:attribute name="dbms">postgresql</xsl:attribute>
+                    <xsl:element name="regExpReplace">
+                        <xsl:attribute name="replace" select="'(\(.*\))'"/>
+                        <xsl:attribute name="with"/>
+                    </xsl:element>
+                    <xsl:element name="append">
+                        <xsl:attribute name="value">
+                            <xsl:value-of select="' USING INDEX '"/>
+                            <xsl:value-of select="addPrimaryKey/@forIndexName"/>
                         </xsl:attribute>
                     </xsl:element>
                 </xsl:element>
